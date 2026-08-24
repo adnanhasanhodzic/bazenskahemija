@@ -1,0 +1,6 @@
+{
+  "name": "Bazen – Kalkulator Hemije",
+  "description": "Aplikacija za proračun potrebnih količina sredstava za održavanje bazena, prema zapremini i preporukama proizvođača hemijskih sredstava.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
