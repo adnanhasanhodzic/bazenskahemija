@@ -15,20 +15,8 @@ export const DEFAULT_SEED_MANUFACTURER: Manufacturer = {
 /**
  * Ugrađena početna baza 10 proizvoda proizvođača "BELIF d.o.o."
  * sa tačnim nazivima, doziranjem, rasponima i specifikacijama.
- *
- * 1. pH-
- * 2. Algicid
- * 3. Flokulant
- * 4. Kristal
- * 5. Hlor tablete 20 g
- * 6. Hlor granule
- * 7. Hlor tablete 200 g
- * 8. Multi tablete 20 g
- * 9. Multi tablete 200 g
- * 10. pH+
  */
 export const DEFAULT_SEED_PRODUCTS: UserProduct[] = [
-  // 1. pH-
   {
     id: 'prod_belif_ph_minus',
     manufacturerId: DEFAULT_SEED_MANUFACTURER_ID,
@@ -53,8 +41,6 @@ export const DEFAULT_SEED_PRODUCTS: UserProduct[] = [
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
-
-  // 2. Algicid
   {
     id: 'prod_belif_algaecide',
     manufacturerId: DEFAULT_SEED_MANUFACTURER_ID,
@@ -63,11 +49,11 @@ export const DEFAULT_SEED_PRODUCTS: UserProduct[] = [
     categoryTitle: 'Algicid',
     dosage: {
       dosageType: 'standard',
-      minAmount: 50,
-      maxAmount: 100,
-      amount: 75,
-      calculatorAmount: 75,
-      unit: 'ml',
+      minAmount: 0.1,
+      maxAmount: 0.5,
+      amount: 0.3,
+      calculatorAmount: 0.3,
+      unit: 'l',
       targetVolume: 10,
       volumeUnit: 'm³',
       frequency: 'custom_days',
@@ -76,8 +62,6 @@ export const DEFAULT_SEED_PRODUCTS: UserProduct[] = [
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
-
-  // 3. Flokulant
   {
     id: 'prod_belif_flocculant',
     manufacturerId: DEFAULT_SEED_MANUFACTURER_ID,
@@ -86,11 +70,11 @@ export const DEFAULT_SEED_PRODUCTS: UserProduct[] = [
     categoryTitle: 'Flokulant',
     dosage: {
       dosageType: 'standard',
-      minAmount: 50,
-      maxAmount: 100,
-      amount: 75,
-      calculatorAmount: 75,
-      unit: 'ml',
+      minAmount: 0.02,
+      maxAmount: 0.05,
+      amount: 0.035,
+      calculatorAmount: 0.035,
+      unit: 'l',
       targetVolume: 10,
       volumeUnit: 'm³',
       frequency: 'weekly',
@@ -98,8 +82,6 @@ export const DEFAULT_SEED_PRODUCTS: UserProduct[] = [
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
-
-  // 4. Kristal
   {
     id: 'prod_belif_crystallizer',
     manufacturerId: DEFAULT_SEED_MANUFACTURER_ID,
@@ -108,11 +90,11 @@ export const DEFAULT_SEED_PRODUCTS: UserProduct[] = [
     categoryTitle: 'Kristal',
     dosage: {
       dosageType: 'standard',
-      minAmount: 50,
-      maxAmount: 100,
-      amount: 75,
-      calculatorAmount: 75,
-      unit: 'ml',
+      minAmount: 0.01,
+      maxAmount: 0.05,
+      amount: 0.03,
+      calculatorAmount: 0.03,
+      unit: 'l',
       targetVolume: 10,
       volumeUnit: 'm³',
       frequency: 'weekly',
@@ -120,8 +102,6 @@ export const DEFAULT_SEED_PRODUCTS: UserProduct[] = [
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
-
-  // 5. Hlor tablete 20 g
   {
     id: 'prod_belif_chlorine_tablets_20g',
     manufacturerId: DEFAULT_SEED_MANUFACTURER_ID,
@@ -130,20 +110,18 @@ export const DEFAULT_SEED_PRODUCTS: UserProduct[] = [
     categoryTitle: 'Hlor tablete 20 g',
     dosage: {
       dosageType: 'standard',
-      minAmount: 15,
-      maxAmount: 20,
-      amount: 18,
-      calculatorAmount: 18,
+      minAmount: 1,
+      maxAmount: null,
+      amount: 1,
+      calculatorAmount: 1,
       unit: 'tableta',
-      targetVolume: 10,
+      targetVolume: 2,
       volumeUnit: 'm³',
       frequency: 'weekly',
     },
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
-
-  // 6. Hlor granule
   {
     id: 'prod_belif_chlorine_granules',
     manufacturerId: DEFAULT_SEED_MANUFACTURER_ID,
@@ -152,20 +130,18 @@ export const DEFAULT_SEED_PRODUCTS: UserProduct[] = [
     categoryTitle: 'Hlor granule',
     dosage: {
       dosageType: 'standard',
-      minAmount: 100,
+      minAmount: 3,
       maxAmount: null,
-      amount: 100,
-      calculatorAmount: 100,
+      amount: 3,
+      calculatorAmount: 3,
       unit: 'g',
-      targetVolume: 10,
+      targetVolume: 1,
       volumeUnit: 'm³',
       frequency: 'weekly',
     },
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
-
-  // 7. Hlor tablete 200 g
   {
     id: 'prod_belif_chlorine_tablets_200g',
     manufacturerId: DEFAULT_SEED_MANUFACTURER_ID,
@@ -175,19 +151,17 @@ export const DEFAULT_SEED_PRODUCTS: UserProduct[] = [
     dosage: {
       dosageType: 'standard',
       minAmount: 1,
-      maxAmount: 2,
-      amount: 2,
-      calculatorAmount: 2,
+      maxAmount: null,
+      amount: 1,
+      calculatorAmount: 1,
       unit: 'tableta',
-      targetVolume: 20,
+      targetVolume: 30,
       volumeUnit: 'm³',
       frequency: 'weekly',
     },
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
-
-  // 8. Multi tablete 20 g
   {
     id: 'prod_belif_multi_tablets_20g',
     manufacturerId: DEFAULT_SEED_MANUFACTURER_ID,
@@ -196,20 +170,18 @@ export const DEFAULT_SEED_PRODUCTS: UserProduct[] = [
     categoryTitle: 'Multi tablete 20 g',
     dosage: {
       dosageType: 'standard',
-      minAmount: 15,
-      maxAmount: 20,
-      amount: 18,
-      calculatorAmount: 18,
+      minAmount: 1,
+      maxAmount: null,
+      amount: 1,
+      calculatorAmount: 1,
       unit: 'tableta',
-      targetVolume: 10,
+      targetVolume: 2,
       volumeUnit: 'm³',
       frequency: 'weekly',
     },
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
-
-  // 9. Multi tablete 200 g
   {
     id: 'prod_belif_multi_tablets_200g',
     manufacturerId: DEFAULT_SEED_MANUFACTURER_ID,
@@ -219,9 +191,9 @@ export const DEFAULT_SEED_PRODUCTS: UserProduct[] = [
     dosage: {
       dosageType: 'standard',
       minAmount: 1,
-      maxAmount: 2,
-      amount: 2,
-      calculatorAmount: 2,
+      maxAmount: null,
+      amount: 1,
+      calculatorAmount: 1,
       unit: 'tableta',
       targetVolume: 20,
       volumeUnit: 'm³',
@@ -230,8 +202,6 @@ export const DEFAULT_SEED_PRODUCTS: UserProduct[] = [
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
   },
-
-  // 10. pH+
   {
     id: 'prod_belif_ph_plus',
     manufacturerId: DEFAULT_SEED_MANUFACTURER_ID,
@@ -240,12 +210,12 @@ export const DEFAULT_SEED_PRODUCTS: UserProduct[] = [
     categoryTitle: 'pH+',
     dosage: {
       dosageType: 'ph_correction',
-      minAmount: 100,
+      minAmount: 10,
       maxAmount: null,
-      amount: 100,
-      calculatorAmount: 100,
+      amount: 10,
+      calculatorAmount: 10,
       unit: 'g',
-      targetVolume: 10,
+      targetVolume: 1,
       volumeUnit: 'm³',
       frequency: 'once',
       phDirection: 'increase',
