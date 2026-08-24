@@ -47,7 +47,6 @@ export function formatLocalizedNumber(
   decimals: number = 2
 ): string {
   if (value === null || value === undefined || isNaN(value)) return '';
-  // Avoid trailing zeros like 7.80 -> 7.8
   const rounded = Number(value.toFixed(decimals));
   return rounded.toString().replace('.', ',');
 }
@@ -67,106 +66,81 @@ export function evaluateWaterStatus(
     const formatted = formatLocalizedNumber(value, 2);
     if (value < 7.2) {
       return {
-        type: 'ph',
-        value,
-        formattedValue: formatted,
-        status: 'below',
-        statusText: 'Ispod idealne vrijednosti',
-        idealText: 'Idealno: 7,2 – 7,6',
-        isIdeal: false,
+        type: 'ph', value, formattedValue: formatted, status: 'below',
+        statusText: 'Ispod idealne vrijednosti', idealText: 'Idealno: 7,2 – 7,6', isIdeal: false,
       };
     } else if (value > 7.6) {
       return {
-        type: 'ph',
-        value,
-        formattedValue: formatted,
-        status: 'above',
-        statusText: 'Iznad idealne vrijednosti',
-        idealText: 'Idealno: 7,2 – 7,6',
-        isIdeal: false,
+        type: 'ph', value, formattedValue: formatted, status: 'above',
+        statusText: 'Iznad idealne vrijednosti', idealText: 'Idealno: 7,2 – 7,6', isIdeal: false,
       };
     } else {
       return {
-        type: 'ph',
-        value,
-        formattedValue: formatted,
-        status: 'ideal',
-        statusText: 'U idealnom rasponu',
-        idealText: 'Idealno: 7,2 – 7,6',
-        isIdeal: true,
+        type: 'ph', value, formattedValue: formatted, status: 'ideal',
+        statusText: 'U idealnom rasponu', idealText: 'Idealno: 7,2 – 7,6', isIdeal: true,
       };
     }
   }
 
-  // Chlorine
   const formatted = formatLocalizedNumber(value, 2);
   if (value < 1.0) {
     return {
-      type: 'chlorine',
-      value,
-      formattedValue: `${formatted} ppm`,
-      status: 'below',
-      statusText: 'Ispod idealne vrijednosti',
-      idealText: 'Idealno: 1,0 – 3,0 ppm',
-      isIdeal: false,
+      type: 'chlorine', value, formattedValue: `${formatted} ppm`, status: 'below',
+      statusText: 'Ispod idealne vrijednosti', idealText: 'Idealno: 1,0 – 3,0 ppm', isIdeal: false,
     };
   } else if (value > 3.0) {
     return {
-      type: 'chlorine',
-      value,
-      formattedValue: `${formatted} ppm`,
-      status: 'above',
-      statusText: 'Iznad idealne vrijednosti',
-      idealText: 'Idealno: 1,0 – 3,0 ppm',
-      isIdeal: false,
+      type: 'chlorine', value, formattedValue: `${formatted} ppm`, status: 'above',
+      statusText: 'Iznad idealne vrijednosti', idealText: 'Idealno: 1,0 – 3,0 ppm', isIdeal: false,
     };
   } else {
     return {
-      type: 'chlorine',
-      value,
-      formattedValue: `${formatted} ppm`,
-      status: 'ideal',
-      statusText: 'U idealnom rasponu',
-      idealText: 'Idealno: 1,0 – 3,0 ppm',
-      isIdeal: true,
+      type: 'chlorine', value, formattedValue: `${formatted} ppm`, status: 'ideal',
+      statusText: 'U idealnom rasponu', idealText: 'Idealno: 1,0 – 3,0 ppm', isIdeal: true,
     };
   }
 }
 
 /**
- * Format quantity nicely according to its unit:
- * - Tablets / pieces: rounded to whole numbers (or 0.5)
- * - ml / g: integer if >= 10, otherwise 1 decimal
- * - l / kg: 2 decimals if < 1, else 1-2 decimals
+ * Format quantity nicely according to its unit.
  */
 export function formatChemicalAmount(amount: number, unit: string): string {
   if (amount <= 0) return '0';
 
   if (unit === 'tableta' || unit === 'komad') {
-    // For tablets, ceil to nearest whole tablet (e.g. 1.2 -> 2 tablete) or round
-    const rounded = Math.ceil(amount);
-    return `${rounded}`;
+    return `${Math.ceil(amount)}`;
   }
 
   if (unit === 'l' || unit === 'kg') {
-    if (amount < 0.1) {
-      return formatLocalizedNumber(amount, 3);
-    }
-    if (amount < 1) {
-      return formatLocalizedNumber(amount, 2);
-    }
+    if (amount < 0.1) return formatLocalizedNumber(amount, 3);
     return formatLocalizedNumber(amount, 2);
   }
 
-  // ml or g
-  if (amount >= 100) {
-    return `${Math.round(amount)}`;
-  }
+  if (amount >= 100) return `${Math.round(amount)}`;
   if (amount >= 10) {
     const rounded = Math.round(amount * 10) / 10;
     return formatLocalizedNumber(rounded, 1);
   }
   return formatLocalizedNumber(amount, 1);
+}
+
+/**
+ * Kalkulatorski prikaz količine.
+ * Važno: unos i deklaracija proizvoda ostaju u litrima, ali se tečne
+ * potrebne količine u rezultatu kalkulatora prikazuju isključivo u ml.
+ */
+function formatCalculatorAmount(amount: number, sourceUnit: string): { formatted: string; displayUnit: string } {
+  if (sourceUnit === 'l') {
+    return {
+      formatted: formatLocalizedNumber(amount * 1000, 1),
+      displayUnit: 'ml',
+    };
+  }
+
+  return {
+    formatted: formatChemicalAmount(amount, sourceUnit),
+    displayUnit: sourceUnit,
+  };
 }
 
 /**
@@ -181,10 +155,10 @@ export function calculateChemicalDosage(params: {
   const { product, poolWorkingM3, currentPh, currentChlorine } = params;
   const dosage = product.dosage;
   const unit = dosage.unit;
+  const displayUnit = unit === 'l' ? 'ml' : unit;
   const targetVolumeM3 = dosage.targetVolume || 10;
   const productTitle = product.customTitle || product.categoryTitle;
 
-  // Base calculator dosage for product (e.g. 75 ml, 100 g, 1 tableta)
   const baseCalcAmount =
     dosage.calculatorAmount ||
     computeCalculatorAmount(dosage.minAmount || dosage.amount, dosage.maxAmount, dosage.unit) ||
@@ -194,198 +168,132 @@ export function calculateChemicalDosage(params: {
   const frequencyText = formatFrequencyLabel(dosage.frequency, dosage.frequencyDays);
   const dosageType = dosage.dosageType || (product.categoryId === 'ph_minus' || product.categoryId === 'ph_plus' ? 'ph_correction' : 'standard');
 
-  // -------------------------------------------------------------------------
-  // 1. pH KOREKCIJA (pH- ili pH+)
-  // -------------------------------------------------------------------------
   if (dosageType === 'ph_correction') {
     const direction = dosage.phDirection || (product.categoryId === 'ph_plus' ? 'increase' : 'decrease');
-    const phEffectAvg =
-      dosage.phEffectAverage ||
-      dosage.phEffectMin ||
-      0.10; // npr. 0.10 za 10 m³
+    const phEffectAvg = dosage.phEffectAverage || dosage.phEffectMin || 0.10;
 
-    // 1A. pH- (Snižavanje pH)
     if (direction === 'decrease') {
       const phVal = currentPh !== null && currentPh !== undefined ? currentPh : 7.8;
-      const targetPh = 7.6; // Gornja granica idealnog opsega (7,2 – 7,6)
+      const targetPh = 7.6;
 
       if (phVal <= targetPh) {
-        // pH je već u idealnom rasponu
         return {
-          productTitle,
-          calculatedAmount: 0,
-          formattedAmount: '0',
-          unit,
+          productTitle, calculatedAmount: 0, formattedAmount: '0', unit: displayUnit,
           dosageType: 'ph_correction',
           subtitle: `pH vrijednost (${formatLocalizedNumber(phVal, 2)}) je u idealnom rasponu (7,2 – 7,6)`,
           explanation: 'Nije potrebno dodavati pH-. Vaš pH je optimalan.',
           note: 'Redovno provjeravajte pH vrijednost jednom do dva puta sedmično.',
-          poolM3: poolWorkingM3,
-          currentPh: phVal,
-          targetPh,
-          isOptimal: true,
+          poolM3: poolWorkingM3, currentPh: phVal, targetPh, isOptimal: true,
         };
       }
 
-      // Potrebno smanjenje: deltaPh = phVal - 7.6
       const deltaPh = phVal - targetPh;
       const volumeRatio = poolWorkingM3 / targetVolumeM3;
       const effectRatio = deltaPh / phEffectAvg;
       const rawRequired = volumeRatio * effectRatio * baseCalcAmount;
-      const formatted = formatChemicalAmount(rawRequired, unit);
+      const display = formatCalculatorAmount(rawRequired, unit);
 
       return {
-        productTitle,
-        calculatedAmount: rawRequired,
-        formattedAmount: formatted,
-        unit,
+        productTitle, calculatedAmount: rawRequired, formattedAmount: display.formatted, unit: display.displayUnit,
         dosageType: 'ph_correction',
         subtitle: `Za smanjenje pH sa ${formatLocalizedNumber(phVal, 2)} na ${formatLocalizedNumber(targetPh, 1)}`,
         explanation: `Prema deklarisanom doziranju: ${baseCalcAmount} ${unit} / ${targetVolumeM3} m³ za promjenu pH od ${formatLocalizedNumber(phEffectAvg, 2)}`,
         note: 'Nakon dodavanja sredstva ponovo izmjerite pH prije naredne korekcije.',
-        poolM3: poolWorkingM3,
-        currentPh: phVal,
-        targetPh,
-        isOptimal: false,
+        poolM3: poolWorkingM3, currentPh: phVal, targetPh, isOptimal: false,
       };
     }
 
-    // 1B. pH+ (Povećanje pH)
     if (direction === 'increase') {
       const phVal = currentPh !== null && currentPh !== undefined ? currentPh : 6.8;
-      const targetPh = 7.2; // Donja granica idealnog opsega (7,2 – 7,6)
+      const targetPh = 7.2;
 
       if (phVal >= targetPh) {
-        // pH je već u idealnom rasponu
         return {
-          productTitle,
-          calculatedAmount: 0,
-          formattedAmount: '0',
-          unit,
+          productTitle, calculatedAmount: 0, formattedAmount: '0', unit: displayUnit,
           dosageType: 'ph_correction',
           subtitle: `pH vrijednost (${formatLocalizedNumber(phVal, 2)}) je u idealnom rasponu (7,2 – 7,6)`,
           explanation: 'Nije potrebno dodavati pH+. Vaš pH je optimalan.',
           note: 'Redovno provjeravajte pH vrijednost jednom do dva puta sedmično.',
-          poolM3: poolWorkingM3,
-          currentPh: phVal,
-          targetPh,
-          isOptimal: true,
+          poolM3: poolWorkingM3, currentPh: phVal, targetPh, isOptimal: true,
         };
       }
 
-      // Potrebno povećanje: deltaPh = 7.2 - phVal
       const deltaPh = targetPh - phVal;
       const volumeRatio = poolWorkingM3 / targetVolumeM3;
       const effectRatio = deltaPh / phEffectAvg;
       const rawRequired = volumeRatio * effectRatio * baseCalcAmount;
-      const formatted = formatChemicalAmount(rawRequired, unit);
+      const display = formatCalculatorAmount(rawRequired, unit);
 
       return {
-        productTitle,
-        calculatedAmount: rawRequired,
-        formattedAmount: formatted,
-        unit,
+        productTitle, calculatedAmount: rawRequired, formattedAmount: display.formatted, unit: display.displayUnit,
         dosageType: 'ph_correction',
         subtitle: `Za povećanje pH sa ${formatLocalizedNumber(phVal, 2)} na ${formatLocalizedNumber(targetPh, 1)}`,
         explanation: `Prema deklarisanom doziranju: ${baseCalcAmount} ${unit} / ${targetVolumeM3} m³ za promjenu pH od ${formatLocalizedNumber(phEffectAvg, 2)}`,
         note: 'Nakon dodavanja sredstva ponovo izmjerite pH prije naredne korekcije.',
-        poolM3: poolWorkingM3,
-        currentPh: phVal,
-        targetPh,
-        isOptimal: false,
+        poolM3: poolWorkingM3, currentPh: phVal, targetPh, isOptimal: false,
       };
     }
   }
 
-  // -------------------------------------------------------------------------
-  // 2. KOREKCIJA HLORA
-  // -------------------------------------------------------------------------
   if (dosageType === 'chlorine_correction') {
     const clVal = currentChlorine !== null && currentChlorine !== undefined ? currentChlorine : null;
     const targetChlorine = '1,0 – 3,0 ppm';
 
     if (clVal !== null && clVal >= 1.0 && clVal <= 3.0) {
-      // Hlor je već u idealnom rasponu
       return {
-        productTitle,
-        calculatedAmount: 0,
-        formattedAmount: '0',
-        unit,
+        productTitle, calculatedAmount: 0, formattedAmount: '0', unit: displayUnit,
         dosageType: 'chlorine_correction',
         subtitle: `Slobodni hlor (${formatLocalizedNumber(clVal, 2)} ppm) je u idealnom rasponu (1,0 – 3,0 ppm)`,
         explanation: 'Nije potrebna hitna korekcija. Održavajte nivo hlora standardnim doziranjem.',
         note: 'Provjeravajte nivo hlora redovno svakih nekoliko dana.',
-        poolM3: poolWorkingM3,
-        currentChlorine: clVal,
-        targetChlorine,
-        isOptimal: true,
+        poolM3: poolWorkingM3, currentChlorine: clVal, targetChlorine, isOptimal: true,
       };
     }
 
     if (clVal !== null && clVal > 3.0) {
-      // Hlor previsok
       return {
-        productTitle,
-        calculatedAmount: 0,
-        formattedAmount: '0',
-        unit,
+        productTitle, calculatedAmount: 0, formattedAmount: '0', unit: displayUnit,
         dosageType: 'chlorine_correction',
         subtitle: `Slobodni hlor (${formatLocalizedNumber(clVal, 2)} ppm) je iznad idealne vrijednosti`,
         explanation: 'Nemojte dodavati hlor. Pustite da nivo hlora prirodno opadne na suncu i kroz filtraciju.',
         note: 'Nemojte se kupati dok nivo hlora ne padne ispod 3,0 ppm.',
-        poolM3: poolWorkingM3,
-        currentChlorine: clVal,
-        targetChlorine,
-        isOptimal: false,
+        poolM3: poolWorkingM3, currentChlorine: clVal, targetChlorine, isOptimal: false,
       };
     }
 
-    // clVal < 1.0 ili nije unijet pa se računa doza za podizanje / šok
     const volumeRatio = poolWorkingM3 / targetVolumeM3;
     let rawRequired = volumeRatio * baseCalcAmount;
 
-    // Ako je unijet nizak hlor (npr. 0.5 ppm), ciljamo podizanje do 1.5 ppm
     if (clVal !== null && clVal >= 0 && clVal < 1.0) {
-      const deficit = 1.5 - clVal; // npr. 1.5 - 0.5 = 1.0
-      // Proporcionalna doza u odnosu na referentni nivo
+      const deficit = 1.5 - clVal;
       const multiplier = Math.max(0.5, Math.min(2.0, deficit / 1.0));
       rawRequired = volumeRatio * baseCalcAmount * multiplier;
     }
 
-    const formatted = formatChemicalAmount(rawRequired, unit);
+    const display = formatCalculatorAmount(rawRequired, unit);
 
     return {
-      productTitle,
-      calculatedAmount: rawRequired,
-      formattedAmount: formatted,
-      unit,
+      productTitle, calculatedAmount: rawRequired, formattedAmount: display.formatted, unit: display.displayUnit,
       dosageType: 'chlorine_correction',
       subtitle: clVal !== null ? `Trenutni hlor: ${formatLocalizedNumber(clVal, 2)} ppm • Ciljna vrijednost: ${targetChlorine}` : `Ciljna vrijednost: ${targetChlorine}`,
       explanation: `Prema deklarisanom doziranju: ${baseCalcAmount} ${unit} / ${targetVolumeM3} m³`,
       note: 'Nakon dodavanja hlora sačekajte nekoliko sati i ponovo izmjerite slobodni hlor.',
-      poolM3: poolWorkingM3,
-      currentChlorine: clVal,
-      targetChlorine,
-      isOptimal: false,
+      poolM3: poolWorkingM3, currentChlorine: clVal, targetChlorine, isOptimal: false,
     };
   }
 
-  // -------------------------------------------------------------------------
-  // 3. STANDARDNI PROIZVOD (Algicid, Flokulant, Hlor tablete 200g za održavanje, itd.)
-  // -------------------------------------------------------------------------
-  // Formula: potrebna količina = (radna zapremina bazena / referentna zapremina) × kalkulatorska doza
   const volumeRatio = poolWorkingM3 / targetVolumeM3;
   const rawRequired = volumeRatio * baseCalcAmount;
-  const formatted = formatChemicalAmount(rawRequired, unit);
+  const display = formatCalculatorAmount(rawRequired, unit);
 
   return {
     productTitle,
     calculatedAmount: rawRequired,
-    formattedAmount: formatted,
-    unit,
+    formattedAmount: display.formatted,
+    unit: display.displayUnit,
     dosageType: 'standard',
     subtitle: `Prema deklarisanom doziranju: ${baseCalcAmount} ${unit} / ${targetVolumeM3} m³`,
-    explanation: `Za bazen zapremine ${formatLocalizedNumber(poolWorkingM3, 1)} m³ potrebno je ${formatted} ${unit} (${frequencyText})`,
+    explanation: `Za bazen zapremine ${formatLocalizedNumber(poolWorkingM3, 1)} m³ potrebno je ${display.formatted} ${display.displayUnit} (${frequencyText})`,
     note: dosage.frequency === 'weekly' ? 'Preporučuje se redovno sedmično doziranje.' : undefined,
     poolM3: poolWorkingM3,
     isOptimal: false,
