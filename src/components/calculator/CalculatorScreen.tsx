@@ -257,11 +257,7 @@ export const CalculatorScreen: React.FC<CalculatorScreenProps> = ({
           </h1>
         </div>
 
-        {currentPool && (
-          <span className="text-xs font-extrabold px-2.5 py-1 rounded-full bg-blue-50 text-[#0062E3] border border-blue-100">
-            {formatLocalizedNumber(poolVolumeM3, 1)} m³
-          </span>
-        )}
+
       </header>
 
       {/* Main Content Area */}
@@ -272,14 +268,21 @@ export const CalculatorScreen: React.FC<CalculatorScreenProps> = ({
         {currentPool ? (
           <div
             id="card-calculator-pool-info"
-            className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-xs flex items-center justify-between"
+            className="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-xs"
           >
+            <div className="flex items-center gap-2 mb-3">
+              <Waves size={18} strokeWidth={2.2} className="text-[#0062E3]" />
+              <span className="text-[11px] font-black uppercase tracking-wider text-[#0062E3]">
+                Aktivni bazen
+              </span>
+            </div>
+
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-blue-50 text-[#0062E3] flex items-center justify-center flex-shrink-0 border border-blue-100">
                 <Waves size={20} strokeWidth={2.2} />
               </div>
-              <div>
-                <h2 className="text-base font-black text-[#0F172A] tracking-tight">
+              <div className="min-w-0">
+                <h2 className="text-base font-black text-[#0F172A] tracking-tight truncate">
                   {currentPool.name || 'Moj bazen'}
                 </h2>
                 <p className="text-xs text-slate-500 font-semibold mt-0.5">
@@ -293,10 +296,6 @@ export const CalculatorScreen: React.FC<CalculatorScreenProps> = ({
                 </p>
               </div>
             </div>
-
-            <span className="px-2.5 py-1 bg-blue-50 text-[#0062E3] text-[10px] font-extrabold rounded-full border border-blue-100 uppercase tracking-wide">
-              Aktivni bazen
-            </span>
           </div>
         ) : (
           <div className="p-4 bg-amber-50 rounded-3xl border border-amber-200 space-y-2">

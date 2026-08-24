@@ -246,23 +246,16 @@ export const WaterTestScreen: React.FC<WaterTestScreenProps> = ({
           className="bg-blue-50/70 rounded-2xl px-4 py-3 border border-blue-100/90 flex items-center justify-between shadow-2xs"
           aria-label="Idealne vrijednosti vode"
         >
-          <div className="flex items-center gap-1.5">
-            <Sparkles size={15} className="text-[#0062E3] flex-shrink-0" />
-            <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#0062E3]">
-              Idealne vrijednosti
+          <div className="flex items-center gap-2 min-w-0 w-full whitespace-nowrap overflow-hidden">
+            <Sparkles size={14} className="text-[#0062E3] flex-shrink-0" />
+            <span className="text-[10px] font-extrabold uppercase tracking-wide text-[#0062E3] flex-shrink-0">
+              Idealne vrijednosti:
             </span>
-          </div>
-
-          <div className="flex items-center gap-3 sm:gap-4 text-xs">
-            <div className="flex items-center gap-1">
-              <span className="font-bold text-slate-600">pH:</span>
-              <strong className="font-black text-slate-900">7,2 – 7,6</strong>
-            </div>
-            <div className="w-1 h-1 rounded-full bg-slate-300" />
-            <div className="flex items-center gap-1">
-              <span className="font-bold text-slate-600">Hlor:</span>
-              <strong className="font-black text-slate-900">1,0 – 3,0 ppm</strong>
-            </div>
+            <span className="text-[11px] font-bold text-slate-600 flex-shrink-0">pH:</span>
+            <strong className="text-[11px] font-black text-slate-900 flex-shrink-0">7,2 – 7,6</strong>
+            <span className="text-slate-300 flex-shrink-0">•</span>
+            <span className="text-[11px] font-bold text-slate-600 flex-shrink-0">Hlor:</span>
+            <strong className="text-[11px] font-black text-slate-900 flex-shrink-0">1,0 – 3,0 ppm</strong>
           </div>
         </section>
 
