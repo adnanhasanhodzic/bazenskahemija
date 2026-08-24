@@ -13,20 +13,12 @@ import { SideDrawer } from './components/common/SideDrawer';
 import { NotificationsModal } from './components/common/NotificationsModal';
 import { AppTab } from './types/navigation';
 import { Pool } from './types/pool';
-import {
-  getSavedPools,
-  getActivePoolId,
-} from './utils/poolStorage';
-import {
-  getStoredSettings,
-  saveStoredSettings,
-  AppSettings,
-} from './utils/settingsStorage';
+import { getSavedPools, getActivePoolId } from './utils/poolStorage';
+import { getStoredSettings, saveStoredSettings, AppSettings } from './utils/settingsStorage';
 import { ensureProductsDatabaseInitialized } from './utils/productStorage';
 import { initializeAndroidFullscreen } from './utils/androidFullscreen';
 
 export default function App() {
-  // Ensure default products database is initialized on fresh install
   useEffect(() => {
     ensureProductsDatabaseInitialized();
     initializeAndroidFullscreen();
@@ -36,8 +28,6 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<AppTab>('home');
   const [isSideMenuOpen, setIsSideMenuOpen] = useState<boolean>(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState<boolean>(false);
-
-  // App Settings (Theme & Notifications)
   const [settings, setSettings] = useState<AppSettings>(() => getStoredSettings());
   const [systemIsDark, setSystemIsDark] = useState<boolean>(() => {
     if (typeof window !== 'undefined' && window.matchMedia) {
@@ -45,53 +35,35 @@ export default function App() {
     }
     return false;
   });
-
-  // Multi-pool persistent state
   const [pools, setPools] = useState<Pool[]>(() => getSavedPools());
   const [activePoolId, setActivePoolIdState] = useState<string | null>(() => getActivePoolId());
-
-  // Deep-linking / direct mode for MyPool screen
   const [myPoolEditorMode, setMyPoolEditorMode] = useState<'add' | 'edit' | null>(null);
   const [editingPoolId, setEditingPoolId] = useState<string | null>(null);
-
-  // Deep-linking / direct mode for MyProducts screen
   const [productEditorMode, setProductEditorMode] = useState<'add' | 'edit' | null>(null);
   const [editingManufacturerId, setEditingManufacturerId] = useState<string | null>(null);
 
-  // Listen to system dark mode preference changes
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return;
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-    const handler = (e: MediaQueryListEvent) => {
-      setSystemIsDark(e.matches);
-    };
+    const handler = (e: MediaQueryListEvent) => setSystemIsDark(e.matches);
     mediaQuery.addEventListener('change', handler);
     return () => mediaQuery.removeEventListener('change', handler);
   }, []);
 
-  // Compute effective dark mode
   const isDark = React.useMemo(() => {
     if (settings.theme === 'dark') return true;
     if (settings.theme === 'light') return false;
     return systemIsDark;
   }, [settings.theme, systemIsDark]);
 
-  // Apply dark class to document root element
   useEffect(() => {
     if (typeof document === 'undefined') return;
-    if (isDark) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    document.documentElement.classList.toggle('dark', isDark);
   }, [isDark]);
 
   useEffect(() => {
-    // Initial sync
-    const loadedPools = getSavedPools();
-    const loadedActiveId = getActivePoolId();
-    setPools(loadedPools);
-    setActivePoolIdState(loadedActiveId);
+    setPools(getSavedPools());
+    setActivePoolIdState(getActivePoolId());
   }, []);
 
   const handleUpdateSettings = (newPartial: Partial<AppSettings>) => {
@@ -99,7 +71,6 @@ export default function App() {
     setSettings(updated);
   };
 
-  // Compute active pool object
   const activePool: Pool | null = React.useMemo(() => {
     if (pools.length === 0) return null;
     if (activePoolId) {
@@ -109,13 +80,8 @@ export default function App() {
     return pools[0];
   }, [pools, activePoolId]);
 
-  const handleSplashFinish = () => {
-    setShowSplash(false);
-  };
-
-  const handleReplaySplash = () => {
-    setShowSplash(true);
-  };
+  const handleSplashFinish = () => setShowSplash(false);
+  const handleReplaySplash = () => setShowSplash(true);
 
   const handlePoolsChanged = (updatedPools: Pool[], newActiveId: string | null) => {
     setPools(updatedPools);
@@ -158,21 +124,15 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center p-0 sm:p-4 md:p-6 select-none font-sans">
-      {/* Mobile Device Frame for Desktop / Fullscreen on Mobile */}
+    <div className="h-[100dvh] w-full bg-slate-950 flex flex-col items-center justify-center p-0 sm:p-4 md:p-6 select-none font-sans overflow-hidden">
       <div
         id="app-root-device"
-        className={`w-full max-w-md bg-white dark:bg-slate-900 sm:rounded-[36px] sm:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.4),0_0_0_10px_rgba(30,41,59,0.8)] sm:ring-1 sm:ring-slate-700/50 min-h-screen sm:min-h-[780px] sm:max-h-[920px] flex flex-col overflow-hidden relative transition-colors ${
-          isDark ? 'dark' : ''
-        }`}
+        className={`relative w-full max-w-md h-[100dvh] sm:min-h-[780px] sm:max-h-[920px] bg-white dark:bg-slate-900 sm:rounded-[36px] sm:shadow-[0_25px_60px_-15px_rgba(0,0,0,0.4),0_0_0_10px_rgba(30,41,59,0.8)] sm:ring-1 sm:ring-slate-700/50 flex flex-col overflow-hidden transition-colors ${isDark ? 'dark' : ''}`}
       >
         {showSplash ? (
-          /* 1. Splash / Loading Screen */
           <SplashScreen onFinish={handleSplashFinish} durationMs={2000} />
         ) : (
-          /* 2. Main App Screen */
-          <div className="w-full h-full flex-1 flex flex-col bg-white dark:bg-slate-900 overflow-hidden transition-colors">
-            {/* App Header (Hamburger, Title, Notifications) - only show on root tab screens when not in full-page form */}
+          <div className="relative w-full h-full min-h-0 flex-1 flex flex-col bg-white dark:bg-slate-900 overflow-hidden transition-colors">
             {!productEditorMode && !myPoolEditorMode && (
               <Header
                 onOpenMenu={() => setIsSideMenuOpen(true)}
@@ -181,8 +141,7 @@ export default function App() {
               />
             )}
 
-            {/* Scrollable Content Area */}
-            <main className="flex-1 overflow-y-auto no-scrollbar bg-[#FCFDFF] dark:bg-slate-900 transition-colors">
+            <main className="min-h-0 flex-1 overflow-y-auto no-scrollbar bg-[#FCFDFF] dark:bg-slate-900 transition-colors pb-[76px]">
               {activeTab === 'home' && (
                 <HomeScreen
                   activePool={activePool}
@@ -212,9 +171,7 @@ export default function App() {
                 <WaterTestScreen
                   activePool={activePool}
                   allPools={pools}
-                  onNavigateToCalculator={() => {
-                    handleSelectTab('calculator');
-                  }}
+                  onNavigateToCalculator={() => handleSelectTab('calculator')}
                   onNavigateToAddPool={handleAddNewPoolFromHome}
                   onSelectActivePoolId={(id) => setActivePoolIdState(id)}
                 />
@@ -225,9 +182,7 @@ export default function App() {
                   activePool={activePool}
                   allPools={pools}
                   onBack={handleBackToHome}
-                  onNavigateToWaterTest={() => {
-                    handleSelectTab('water-test');
-                  }}
+                  onNavigateToWaterTest={() => handleSelectTab('water-test')}
                   onNavigateToProducts={() => {
                     setProductEditorMode(null);
                     setEditingManufacturerId(null);
@@ -271,17 +226,12 @@ export default function App() {
               )}
             </main>
 
-            {/* Bottom Navigation Bar */}
             {!productEditorMode && (
-              <BottomNav
-                activeTab={activeTab}
-                onSelectTab={handleSelectTab}
-              />
+              <BottomNav activeTab={activeTab} onSelectTab={handleSelectTab} />
             )}
           </div>
         )}
 
-        {/* Side Menu Drawer */}
         <SideDrawer
           isOpen={isSideMenuOpen}
           activeTab={activeTab}
@@ -293,7 +243,6 @@ export default function App() {
           onReplaySplash={handleReplaySplash}
         />
 
-        {/* Notifications Modal */}
         <NotificationsModal
           isOpen={isNotificationsOpen}
           onClose={() => setIsNotificationsOpen(false)}
