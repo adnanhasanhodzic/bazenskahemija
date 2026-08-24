@@ -1,0 +1,225 @@
+name: UPDATE BELIF Default Values
+
+on:
+  workflow_dispatch:
+
+jobs:
+  update:
+    name: Ispravi BELIF proizvode
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Preuzmi kod
+        uses: actions/checkout@v4
+
+      - name: Ispravi defaultne BELIF vrijednosti
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+
+          seed_path = Path('src/utils/defaultSeedProducts.ts')
+          storage_path = Path('src/utils/productStorage.ts')
+
+          replacements = {
+              'algaecide': {
+                  'dosageType': 'standard', 'minAmount': 0.1, 'maxAmount': 0.5, 'amount': 0.3,
+                  'calculatorAmount': 0.3, 'unit': 'l', 'targetVolume': 10,
+                  'frequency': 'custom_days', 'frequencyDays': 7,
+              },
+              'flocculant': {
+                  'dosageType': 'standard', 'minAmount': 0.02, 'maxAmount': 0.05, 'amount': 0.035,
+                  'calculatorAmount': 0.035, 'unit': 'l', 'targetVolume': 10,
+                  'frequency': 'weekly',
+              },
+              'crystallizer': {
+                  'dosageType': 'standard', 'minAmount': 0.01, 'maxAmount': 0.05, 'amount': 0.03,
+                  'calculatorAmount': 0.03, 'unit': 'l', 'targetVolume': 10,
+                  'frequency': 'weekly',
+              },
+              'chlorine_tablets_20g': {
+                  'dosageType': 'standard', 'minAmount': 1, 'maxAmount': 'null', 'amount': 1,
+                  'calculatorAmount': 1, 'unit': 'tableta', 'targetVolume': 2,
+                  'frequency': 'weekly',
+              },
+              'chlorine_granules': {
+                  'dosageType': 'standard', 'minAmount': 3, 'maxAmount': 'null', 'amount': 3,
+                  'calculatorAmount': 3, 'unit': 'g', 'targetVolume': 1,
+                  'frequency': 'weekly',
+              },
+              'chlorine_tablets_200g': {
+                  'dosageType': 'standard', 'minAmount': 1, 'maxAmount': 'null', 'amount': 1,
+                  'calculatorAmount': 1, 'unit': 'tableta', 'targetVolume': 30,
+                  'frequency': 'weekly',
+              },
+              'multi_tablets_20g': {
+                  'dosageType': 'standard', 'minAmount': 1, 'maxAmount': 'null', 'amount': 1,
+                  'calculatorAmount': 1, 'unit': 'tableta', 'targetVolume': 2,
+                  'frequency': 'weekly',
+              },
+              'multi_tablets_200g': {
+                  'dosageType': 'standard', 'minAmount': 1, 'maxAmount': 'null', 'amount': 1,
+                  'calculatorAmount': 1, 'unit': 'tableta', 'targetVolume': 20,
+                  'frequency': 'weekly',
+              },
+              'ph_plus': {
+                  'dosageType': 'ph_correction', 'minAmount': 10, 'maxAmount': 'null', 'amount': 10,
+                  'calculatorAmount': 10, 'unit': 'g', 'targetVolume': 1,
+                  'frequency': 'once', 'phDirection': 'increase',
+                  'phEffectMin': 0.10, 'phEffectMax': 0.15, 'phEffectAverage': 0.125,
+              },
+          }
+
+          def dosage_block(v):
+              lines = [
+                  "      dosage: {",
+                  f"        dosageType: '{v['dosageType']}',",
+                  f"        minAmount: {v['minAmount']},",
+                  f"        maxAmount: {v['maxAmount']},",
+                  f"        amount: {v['amount']},",
+                  f"        calculatorAmount: {v['calculatorAmount']},",
+                  f"        unit: '{v['unit']}',",
+                  f"        targetVolume: {v['targetVolume']},",
+                  "        volumeUnit: 'm³',",
+                  f"        frequency: '{v['frequency']}',",
+              ]
+              if 'frequencyDays' in v:
+                  lines.append(f"        frequencyDays: {v['frequencyDays']},")
+              if 'phDirection' in v:
+                  lines.append(f"        phDirection: '{v['phDirection']}',")
+                  lines.append(f"        phEffectMin: {v['phEffectMin']},")
+                  lines.append(f"        phEffectMax: {v['phEffectMax']},")
+                  lines.append(f"        phEffectAverage: {v['phEffectAverage']},")
+              lines.append("      },")
+              return '\n'.join(lines)
+
+          def replace_product_dosage(text, category_id, values):
+              pattern = re.compile(
+                  r"(categoryId: '" + re.escape(category_id) + r"',\n)(\s*)dosage: \{.*?\n\s*\},\n(\s*createdAt:)",
+                  re.DOTALL,
+              )
+              replacement = lambda m: m.group(1) + dosage_block(values) + '\n' + m.group(3)
+              new_text, count = pattern.subn(replacement, text, count=1)
+              if count != 1:
+                  raise SystemExit(f'Ne mogu pronaći dosage blok za {category_id} u {seed_path}')
+              return new_text
+
+          seed = seed_path.read_text(encoding='utf-8')
+          for category_id, values in replacements.items():
+              seed = replace_product_dosage(seed, category_id, values)
+          seed_path.write_text(seed, encoding='utf-8')
+
+          # Ažuriraj PREDEFINED_PRODUCT_TYPES u productStorage.ts tako da novi unos proizvoda
+          # koristi iste ispravne BELIF vrijednosti i jedinice.
+          storage = storage_path.read_text(encoding='utf-8')
+
+          def replace_predefined(text, category_id, values):
+              pattern = re.compile(
+                  r"(id: '" + re.escape(category_id) + r"',\n\s*title: '[^']+',\n)(\s*defaultUnit: '[^']+',\n\s*defaultAmount: [^,]+,\n\s*defaultMinAmount: [^,]+,\n\s*defaultMaxAmount: [^,]+,\n\s*defaultTargetVolume: [^,]+,\n\s*defaultFrequency: '[^']+',\n)(\s*defaultFrequencyDays: [^,]+,\n)?",
+                  re.DOTALL,
+              )
+              max_value = 'undefined' if values['maxAmount'] == 'null' else str(values['maxAmount'])
+              block = (
+                  f"{m.group(1)}"
+                  f"    defaultUnit: '{values['unit']}',\n"
+                  f"    defaultAmount: {values['amount']},\n"
+                  f"    defaultMinAmount: {values['minAmount']},\n"
+                  f"    defaultMaxAmount: {max_value},\n"
+                  f"    defaultTargetVolume: {values['targetVolume']},\n"
+                  f"    defaultFrequency: '{values['frequency']}',\n"
+              )
+              if 'frequencyDays' in values:
+                  block += f"    defaultFrequencyDays: {values['frequencyDays']},\n"
+              return block
+
+          for category_id, values in replacements.items():
+              pattern = re.compile(
+                  r"(\{\n\s*id: '" + re.escape(category_id) + r"',\n\s*title: '[^']+',\n)"
+                  r"\s*defaultUnit: '[^']+',\n"
+                  r"\s*defaultAmount: [^,]+,\n"
+                  r"\s*defaultMinAmount: [^,]+,\n"
+                  r"\s*defaultMaxAmount: [^,]+,\n"
+                  r"\s*defaultTargetVolume: [^,]+,\n"
+                  r"\s*defaultFrequency: '[^']+',\n"
+                  r"(?:\s*defaultFrequencyDays: [^,]+,\n)?",
+                  re.DOTALL,
+              )
+              max_value = 'undefined' if values['maxAmount'] == 'null' else str(values['maxAmount'])
+              replacement = (
+                  f"\\g<1>"
+                  f"    defaultUnit: '{values['unit']}',\n"
+                  f"    defaultAmount: {values['amount']},\n"
+                  f"    defaultMinAmount: {values['minAmount']},\n"
+                  f"    defaultMaxAmount: {max_value},\n"
+                  f"    defaultTargetVolume: {values['targetVolume']},\n"
+                  f"    defaultFrequency: '{values['frequency']}',\n"
+                  + (f"    defaultFrequencyDays: {values['frequencyDays']},\n" if 'frequencyDays' in values else '')
+              )
+              storage, count = pattern.subn(replacement, storage, count=1)
+              if count != 1:
+                  raise SystemExit(f'Ne mogu pronaći PREDEFINED blok za {category_id} u {storage_path}')
+
+          storage_path.write_text(storage, encoding='utf-8')
+
+          # Jednokratna migracija već spremljenih BELIF proizvoda + prikaz tečnih doza u ml.
+          marker = "const BELIF_DEFAULTS_MIGRATION_KEY = 'bazen_kalkulator_belif_defaults_v3';"
+          if marker not in storage:
+              storage = storage.replace(
+                  "const SEEDED_FLAG_KEY = 'bazen_kalkulator_db_seeded_v2';",
+                  "const SEEDED_FLAG_KEY = 'bazen_kalkulator_db_seeded_v2';\n" + marker,
+                  1,
+              )
+
+          migration_fn = r'''\nfunction migrateBelifDefaultValuesV3(): void {\n  if (typeof window === 'undefined' || !window.localStorage) return;\n  if (localStorage.getItem(BELIF_DEFAULTS_MIGRATION_KEY) === 'true') return;\n\n  try {\n    const raw = localStorage.getItem(PRODUCTS_KEY);\n    if (!raw) {\n      localStorage.setItem(BELIF_DEFAULTS_MIGRATION_KEY, 'true');\n      return;\n    }\n\n    const products = JSON.parse(raw) as UserProduct[];\n    if (!Array.isArray(products)) return;\n\n    const defaultsByCategory: Record<string, ProductDosage> = {\n      algaecide: { dosageType: 'standard', minAmount: 0.1, maxAmount: 0.5, amount: 0.3, calculatorAmount: 0.3, unit: 'l', targetVolume: 10, volumeUnit: 'm³', frequency: 'custom_days', frequencyDays: 7 },\n      flocculant: { dosageType: 'standard', minAmount: 0.02, maxAmount: 0.05, amount: 0.035, calculatorAmount: 0.035, unit: 'l', targetVolume: 10, volumeUnit: 'm³', frequency: 'weekly', frequencyDays: 7 },\n      crystallizer: { dosageType: 'standard', minAmount: 0.01, maxAmount: 0.05, amount: 0.03, calculatorAmount: 0.03, unit: 'l', targetVolume: 10, volumeUnit: 'm³', frequency: 'weekly', frequencyDays: 7 },\n      chlorine_tablets_20g: { dosageType: 'standard', minAmount: 1, maxAmount: null, amount: 1, calculatorAmount: 1, unit: 'tableta', targetVolume: 2, volumeUnit: 'm³', frequency: 'weekly', frequencyDays: 7 },\n      chlorine_granules: { dosageType: 'standard', minAmount: 3, maxAmount: null, amount: 3, calculatorAmount: 3, unit: 'g', targetVolume: 1, volumeUnit: 'm³', frequency: 'weekly', frequencyDays: 7 },\n      chlorine_tablets_200g: { dosageType: 'standard', minAmount: 1, maxAmount: null, amount: 1, calculatorAmount: 1, unit: 'tableta', targetVolume: 30, volumeUnit: 'm³', frequency: 'weekly', frequencyDays: 7 },\n      multi_tablets_20g: { dosageType: 'standard', minAmount: 1, maxAmount: null, amount: 1, calculatorAmount: 1, unit: 'tableta', targetVolume: 2, volumeUnit: 'm³', frequency: 'weekly', frequencyDays: 7 },\n      multi_tablets_200g: { dosageType: 'standard', minAmount: 1, maxAmount: null, amount: 1, calculatorAmount: 1, unit: 'tableta', targetVolume: 20, volumeUnit: 'm³', frequency: 'weekly', frequencyDays: 7 },\n      ph_plus: { dosageType: 'ph_correction', minAmount: 10, maxAmount: null, amount: 10, calculatorAmount: 10, unit: 'g', targetVolume: 1, volumeUnit: 'm³', frequency: 'once', frequencyDays: 7, phDirection: 'increase', phEffectMin: 0.10, phEffectMax: 0.15, phEffectAverage: 0.125 },\n    };\n\n    const updated = products.map((product) => {\n      if (product.manufacturerId !== DEFAULT_SEED_MANUFACTURER_ID) return product;\n      const d = defaultsByCategory[product.categoryId];\n      if (!d) return product;\n      return { ...product, dosage: d, updatedAt: new Date().toISOString() };\n    });\n\n    localStorage.setItem(PRODUCTS_KEY, JSON.stringify(updated));\n    localStorage.setItem(BELIF_DEFAULTS_MIGRATION_KEY, 'true');\n  } catch (err) {\n    console.error('Greška pri migraciji BELIF defaultnih vrijednosti:', err);\n  }\n}\n'''
+
+          if 'function migrateBelifDefaultValuesV3()' not in storage:
+              anchor = "export function ensureProductsDatabaseInitialized(): void {"
+              storage = storage.replace(anchor, migration_fn + "\n" + anchor, 1)
+
+          storage = storage.replace(
+              "const isSeeded = localStorage.getItem(SEEDED_FLAG_KEY);\n    if (isSeeded === 'true') {\n      // Već inicijalizovano ranije; ne diraj bazu čak i ako je korisnik namjerno obrisao sve stavke\n      return;\n    }",
+              "const isSeeded = localStorage.getItem(SEEDED_FLAG_KEY);\n    if (isSeeded === 'true') {\n      migrateBelifDefaultValuesV3();\n      return;\n    }",
+              1,
+          )
+
+          # Prikaz potrebne količine: tečne doze se unose i čuvaju u L, ali se u kalkulatoru prikazuju u ml.
+          old = """  if (!poolWorkingLiters || poolWorkingLiters <= 0) {\n    return {\n      calculatedAmount: calcAmount,\n      formattedAmount: `${calcAmount}`,\n      unit: dosage.unit,\n      frequencyText: freqText,\n      explanation: `${calcAmount} ${dosage.unit} / ${dosage.targetVolume} ${dosage.volumeUnit}`,\n    };\n  }"""
+          new = """  if (!poolWorkingLiters || poolWorkingLiters <= 0) {\n    const noPoolIsLiquid = dosage.unit === 'l';\n    const noPoolAmount = noPoolIsLiquid ? calcAmount * 1000 : calcAmount;\n    const noPoolFormatted = noPoolIsLiquid\n      ? Number(noPoolAmount.toFixed(1)).toString()\n      : `${calcAmount}`;\n    return {\n      calculatedAmount: calcAmount,\n      formattedAmount: noPoolFormatted,\n      unit: noPoolIsLiquid ? 'ml' : dosage.unit,\n      frequencyText: freqText,\n      explanation: `${noPoolFormatted} ${noPoolIsLiquid ? 'ml' : dosage.unit} / ${dosage.targetVolume} ${dosage.volumeUnit}`,\n    };\n  }"""
+          if old not in storage:
+              raise SystemExit('Nije pronađen blok calculateRequiredDose za stanje bez bazena.')
+          storage = storage.replace(old, new, 1)
+
+          old2 = """  } else if (dosage.unit === 'kg' || dosage.unit === 'l') {\n    formatted = rawCalculated < 1 ? rawCalculated.toFixed(2) : rawCalculated.toFixed(1);\n  } else {"""
+          new2 = """  } else if (dosage.unit === 'l') {\n    const milliliters = rawCalculated * 1000;\n    formatted = Number(milliliters.toFixed(1)).toString();\n  } else if (dosage.unit === 'kg') {\n    formatted = rawCalculated < 1 ? rawCalculated.toFixed(2) : rawCalculated.toFixed(1);\n  } else {"""
+          if old2 not in storage:
+              raise SystemExit('Nije pronađen blok formatiranja tečne doze u calculateRequiredDose.')
+          storage = storage.replace(old2, new2, 1)
+
+          old3 = """  return {\n    calculatedAmount: rawCalculated,\n    formattedAmount: formatted,\n    unit: dosage.unit,\n    frequencyText: freqText,\n    explanation: `Za vaš bazen (${poolWorkingLiters.toLocaleString('de-DE')} L / ${poolM3} m³) potrebno je ${formatted} ${dosage.unit} (${freqText})`,\n  };"""
+          new3 = """  const displayUnit = dosage.unit === 'l' ? 'ml' : dosage.unit;\n\n  return {\n    calculatedAmount: rawCalculated,\n    formattedAmount: formatted,\n    unit: displayUnit,\n    frequencyText: freqText,\n    explanation: `Za vaš bazen (${poolWorkingLiters.toLocaleString('de-DE')} L / ${poolM3} m³) potrebno je ${formatted} ${displayUnit} (${freqText})`,\n  };"""
+          if old3 not in storage:
+              raise SystemExit('Nije pronađen završni return calculateRequiredDose.')
+          storage = storage.replace(old3, new3, 1)
+
+          storage_path.write_text(storage, encoding='utf-8')
+
+          # Brza provjera ključnih vrijednosti.
+          for needle in ["defaultUnit: 'l'", "defaultAmount: 0.3", "defaultAmount: 0.035", "defaultAmount: 0.03", "defaultTargetVolume: 2", "defaultTargetVolume: 1", "defaultTargetVolume: 30", "defaultTargetVolume: 20"]:
+              if needle not in storage:
+                  raise SystemExit(f'Nedostaje očekivana vrijednost nakon izmjene: {needle}')
+
+          print('BELIF default vrijednosti, postojeći BELIF proizvodi i prikaz tečnih doza su ispravljeni.')
+
+      - name: Provjeri TypeScript build
+        run: |
+          npm install
+          npm run build
+
+      - name: Sačuvaj izmjene u Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/utils/defaultSeedProducts.ts src/utils/productStorage.ts
+          git diff --cached --check
+          git commit -m "Fix BELIF default product dosages and liquid units"
+          git push
