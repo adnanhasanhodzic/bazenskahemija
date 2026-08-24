@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   ArrowLeft,
   Check,
@@ -57,12 +57,14 @@ interface SelectedProductState {
 
 interface AddProductScreenProps {
   editingManufacturerId?: string | null;
+  focusProductCategoryId?: string | null;
   onSave: () => void;
   onBack: () => void;
 }
 
 export const AddProductScreen: React.FC<AddProductScreenProps> = ({
   editingManufacturerId,
+  focusProductCategoryId,
   onSave,
   onBack,
 }) => {
@@ -84,6 +86,17 @@ export const AddProductScreen: React.FC<AddProductScreenProps> = ({
     }
     return '';
   });
+
+  useEffect(() => {
+    if (!focusProductCategoryId) return;
+    const timer = window.setTimeout(() => {
+      document.getElementById(`dosage-card-${focusProductCategoryId}`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [focusProductCategoryId]);
 
   // 2. Selected products map (categoryId -> product config)
   const [selectedProducts, setSelectedProducts] = useState<Map<ProductCategoryId, SelectedProductState>>(() => {

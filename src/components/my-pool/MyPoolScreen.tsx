@@ -120,19 +120,27 @@ export const MyPoolScreen: React.FC<MyPoolScreenProps> = ({
   // If in Add or Edit mode, show PoolFormEditor
   if (mode === 'add' || mode === 'edit') {
     return (
-      <PoolFormEditor
-        initialPool={mode === 'edit' ? selectedPoolForEdit : null}
-        onBack={() => {
-          if (pools.length === 0 && onBackToHome) {
-            onBackToHome();
-          } else {
-            setMode('list');
-            setSelectedPoolForEdit(null);
-          }
-        }}
-        onSave={handleSavePool}
-        onDeleteRequest={mode === 'edit' ? handleDeleteRequest : undefined}
-      />
+      <>
+        <PoolFormEditor
+          initialPool={mode === 'edit' ? selectedPoolForEdit : null}
+          onBack={() => {
+            if (pools.length === 0 && onBackToHome) {
+              onBackToHome();
+            } else {
+              setMode('list');
+              setSelectedPoolForEdit(null);
+            }
+          }}
+          onSave={handleSavePool}
+          onDeleteRequest={mode === 'edit' ? handleDeleteRequest : undefined}
+        />
+        <DeletePoolModal
+          isOpen={Boolean(poolToDelete)}
+          poolName={poolToDelete?.name || ''}
+          onConfirm={handleConfirmDelete}
+          onCancel={() => setPoolToDelete(null)}
+        />
+      </>
     );
   }
 

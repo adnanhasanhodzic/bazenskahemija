@@ -15,7 +15,7 @@ import { AppTab } from './types/navigation';
 import { Pool } from './types/pool';
 import { getSavedPools, getActivePoolId } from './utils/poolStorage';
 import { getStoredSettings, saveStoredSettings, AppSettings } from './utils/settingsStorage';
-import { ensureProductsDatabaseInitialized } from './utils/productStorage';
+import { ensureProductsDatabaseInitialized, getSavedUserProducts } from './utils/productStorage';
 import { initializeAndroidFullscreen } from './utils/androidFullscreen';
 
 export default function App() {
@@ -41,6 +41,7 @@ export default function App() {
   const [editingPoolId, setEditingPoolId] = useState<string | null>(null);
   const [productEditorMode, setProductEditorMode] = useState<'add' | 'edit' | null>(null);
   const [editingManufacturerId, setEditingManufacturerId] = useState<string | null>(null);
+  const [focusProductCategoryId, setFocusProductCategoryId] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) return;
@@ -107,6 +108,7 @@ export default function App() {
     setEditingPoolId(null);
     setProductEditorMode(null);
     setEditingManufacturerId(null);
+    setFocusProductCategoryId(null);
     setActiveTab(tab);
   };
 
@@ -115,12 +117,14 @@ export default function App() {
     setEditingPoolId(null);
     setProductEditorMode(null);
     setEditingManufacturerId(null);
+    setFocusProductCategoryId(null);
     setActiveTab('home');
   };
 
   const handleSaveProducts = () => {
     setProductEditorMode(null);
     setEditingManufacturerId(null);
+    setFocusProductCategoryId(null);
   };
 
   return (
@@ -196,6 +200,7 @@ export default function App() {
                 productEditorMode ? (
                   <AddProductScreen
                     editingManufacturerId={editingManufacturerId}
+                    focusProductCategoryId={focusProductCategoryId}
                     onSave={handleSaveProducts}
                     onBack={() => {
                       setProductEditorMode(null);
@@ -206,10 +211,20 @@ export default function App() {
                   <MyProductsScreen
                     onAddNewProduct={() => {
                       setEditingManufacturerId(null);
+                      setFocusProductCategoryId(null);
                       setProductEditorMode('add');
                     }}
                     onEditManufacturer={(mfgId) => {
                       setEditingManufacturerId(mfgId);
+                      setFocusProductCategoryId(null);
+                      setProductEditorMode('edit');
+                    }}
+                    onEditProduct={(categoryId) => {
+                      const products = getSavedUserProducts();
+                      const product = products.find((p) => p.categoryId === categoryId);
+                      if (!product) return;
+                      setEditingManufacturerId(product.manufacturerId);
+                      setFocusProductCategoryId(categoryId);
                       setProductEditorMode('edit');
                     }}
                     onBack={handleBackToHome}

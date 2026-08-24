@@ -22,12 +22,14 @@ import {
 interface MyProductsScreenProps {
   onAddNewProduct: () => void;
   onEditManufacturer: (manufacturerId: string) => void;
+  onEditProduct: (categoryId: string) => void;
   onBack?: () => void;
 }
 
 export const MyProductsScreen: React.FC<MyProductsScreenProps> = ({
   onAddNewProduct,
   onEditManufacturer,
+  onEditProduct,
   onBack,
 }) => {
   // Groups data (strictly organized by manufacturer)
@@ -297,6 +299,18 @@ export const MyProductsScreen: React.FC<MyProductsScreenProps> = ({
                                     </div>
                                   </div>
                                 </div>
+
+                                {/* Right: Edit + Delete single product buttons */}
+                                <button
+                                  id={`btn-edit-product-${product.id}`}
+                                  type="button"
+                                  onClick={() => onEditProduct(product.categoryId)}
+                                  className="w-8 h-8 rounded-xl text-slate-400 hover:text-[#0062E3] hover:bg-blue-50 dark:hover:bg-blue-950/40 flex items-center justify-center transition-colors cursor-pointer flex-shrink-0"
+                                  title="Uredi doziranje ovog proizvoda"
+                                  aria-label="Uredi doziranje proizvoda"
+                                >
+                                  <Pencil size={14} strokeWidth={2.2} />
+                                </button>
 
                                 {/* Right: Delete single product button */}
                                 <button

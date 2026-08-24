@@ -140,8 +140,7 @@ export const PoolFormEditor: React.FC<PoolFormEditorProps> = ({
     setShowSuccessToast(true);
     setTimeout(() => {
       setShowSuccessToast(false);
-      onBack();
-    }, 500);
+    }, 1200);
   };
 
   return (
