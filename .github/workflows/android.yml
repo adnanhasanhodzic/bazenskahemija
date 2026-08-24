@@ -1,0 +1,128 @@
+name: Build Bazenska Hemija APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Preuzmi kod
+        uses: actions/checkout@v4
+
+      - name: Postavi Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instaliraj pakete
+        run: npm install
+
+      - name: Osiguraj Capacitor Android
+        run: |
+          npm install --save-exact @capacitor/core@8.4.2 @capacitor/cli@8.4.2 @capacitor/android@8.4.2
+          npm install --save-dev --save-exact @capacitor/assets@3.0.5
+
+      - name: Napravi web build
+        run: npm run build
+
+      - name: Dodaj Android platformu
+        run: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+
+      - name: Pripremi logo
+        run: |
+          mkdir -p assets
+
+          if [ -f "src/assets/MB-LOGO.png" ]; then
+            cp "src/assets/MB-LOGO.png" "assets/icon.png"
+            cp "src/assets/MB-LOGO.png" "assets/logo.png"
+          else
+            echo "GREŠKA: src/assets/MB-LOGO.png nije pronađen!"
+            find src -iname "*logo*" -type f
+            exit 1
+          fi
+
+      - name: Generiši Android launcher ikone
+        run: |
+          npx @capacitor/assets generate \
+            --android \
+            --iconBackgroundColor '#0B8FF5' \
+            --iconBackgroundColorDark '#0B8FF5'
+
+      - name: Sinhronizuj Capacitor
+        run: npx cap sync android
+
+      - name: Postavi Android fullscreen
+        shell: bash
+        run: |
+          MAIN_ACTIVITY=$(find android/app/src/main/java -name "MainActivity.java" | head -1)
+
+          if [ -z "$MAIN_ACTIVITY" ]; then
+            MAIN_ACTIVITY=$(find android/app/src/main/java -name "MainActivity.kt" | head -1)
+          fi
+
+          if [ -z "$MAIN_ACTIVITY" ]; then
+            echo "GREŠKA: MainActivity nije pronađen."
+            exit 1
+          fi
+
+          echo "MainActivity: $MAIN_ACTIVITY"
+
+          if [[ "$MAIN_ACTIVITY" == *.java ]]; then
+            PACKAGE_LINE=$(grep '^package ' "$MAIN_ACTIVITY" | head -1)
+
+            cat > "$MAIN_ACTIVITY" <<EOF
+          $PACKAGE_LINE
+
+          import android.os.Bundle;
+          import android.view.View;
+          import com.getcapacitor.BridgeActivity;
+
+          public class MainActivity extends BridgeActivity {
+            @Override
+            public void onCreate(Bundle savedInstanceState) {
+              super.onCreate(savedInstanceState);
+
+              getWindow().getDecorView().setSystemUiVisibility(
+                View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | View.SYSTEM_UI_FLAG_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+              );
+            }
+          }
+          EOF
+          fi
+
+      - name: Sinhronizuj Android konfiguraciju
+        run: npx cap sync android
+
+      - name: Napravi debug APK
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon
+
+      - name: Provjeri APK
+        run: |
+          echo "=== Generisani APK ==="
+          find android/app/build/outputs/apk -type f -name "*.apk" -print
+
+          test -f android/app/build/outputs/apk/debug/app-debug.apk
+
+          echo "=== Veličina APK-a ==="
+          ls -lh android/app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Sačuvaj APK kao Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Bazenska-Hemija-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 7
