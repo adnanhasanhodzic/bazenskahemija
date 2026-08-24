@@ -19,7 +19,7 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onSelectTab }) 
   return (
     <nav
       id="bottom-navigation-bar"
-      className="w-full flex-shrink-0 sticky bottom-0 bg-white dark:bg-slate-900 border-t border-slate-200/90 dark:border-slate-800 shadow-[0_-4px_16px_rgba(0,0,0,0.03)] px-2 py-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] flex items-center justify-around z-30 select-none transition-colors"
+      className="absolute left-0 right-0 bottom-0 w-full bg-white dark:bg-slate-900 border-t border-slate-200/90 dark:border-slate-800 shadow-[0_-4px_16px_rgba(0,0,0,0.03)] px-2 py-1.5 pb-1.5 flex items-center justify-around z-50 select-none transition-colors"
       aria-label="Glavna navigacija"
     >
       {navItems.map((item) => {
@@ -38,7 +38,6 @@ export const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onSelectTab }) 
                 : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-medium'
             }`}
           >
-            {/* Top active indicator line */}
             {isActive && (
               <span className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-[#0062E3] dark:bg-blue-400 rounded-full" />
             )}
