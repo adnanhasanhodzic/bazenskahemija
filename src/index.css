@@ -8,8 +8,18 @@
     margin: 0;
     padding: 0;
     overflow: hidden;
-    overscroll-behavior-y: none;
+    overscroll-behavior: none;
     -webkit-tap-highlight-color: transparent;
+  }
+
+  html, body {
+    height: 100dvh;
+    min-height: 100dvh;
+  }
+
+  #root {
+    height: 100dvh;
+    min-height: 100dvh;
   }
 
   body {
@@ -17,13 +27,11 @@
   }
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
 .no-scrollbar {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
