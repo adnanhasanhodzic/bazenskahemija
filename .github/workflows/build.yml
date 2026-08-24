@@ -17,6 +17,21 @@ jobs:
         with:
           node-version: 22
 
+      - name: Postavi Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Provjeri verzije
+        run: |
+          echo "=== Node ==="
+          node --version
+          echo "=== NPM ==="
+          npm --version
+          echo "=== Java ==="
+          java -version
+
       - name: Instaliraj pakete
         run: npm install
 
@@ -39,10 +54,12 @@ jobs:
           mkdir -p assets
 
           if [ -f "src/assets/MB-LOGO.png" ]; then
+            echo "Pronađen MB-LOGO.png"
             cp "src/assets/MB-LOGO.png" "assets/icon.png"
             cp "src/assets/MB-LOGO.png" "assets/logo.png"
           else
             echo "GREŠKA: src/assets/MB-LOGO.png nije pronađen!"
+            echo "Dostupni logo fajlovi:"
             find src -iname "*logo*" -type f
             exit 1
           fi
@@ -103,6 +120,14 @@ jobs:
 
       - name: Sinhronizuj Android konfiguraciju
         run: npx cap sync android
+
+      - name: Provjeri Gradle i Java konfiguraciju
+        working-directory: android
+        run: |
+          echo "=== Java ==="
+          java -version
+          echo "=== Gradle ==="
+          ./gradlew --version
 
       - name: Napravi debug APK
         working-directory: android
