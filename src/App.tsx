@@ -199,39 +199,43 @@ export default function App() {
               )}
 
               {activeTab === 'my-products' && (
-                productEditorMode ? (
-                  <AddProductScreen
-                    editingManufacturerId={editingManufacturerId}
-                    focusProductCategoryId={focusProductCategoryId}
-                    onSave={handleSaveProducts}
-                    onBack={() => {
-                      setProductEditorMode(null);
-                      setEditingManufacturerId(null);
-                    }}
-                  />
-                ) : (
-                  <MyProductsScreen
-                    onAddNewProduct={() => {
-                      setEditingManufacturerId(null);
-                      setFocusProductCategoryId(null);
-                      setProductEditorMode('add');
-                    }}
-                    onEditManufacturer={(mfgId) => {
-                      setEditingManufacturerId(mfgId);
-                      setFocusProductCategoryId(null);
-                      setProductEditorMode('edit');
-                    }}
-                    onEditProduct={(categoryId) => {
-                      const products = getSavedUserProducts();
-                      const product = products.find((p) => p.categoryId === categoryId);
-                      if (!product) return;
-                      setEditingManufacturerId(product.manufacturerId);
-                      setFocusProductCategoryId(categoryId);
-                      setProductEditorMode('edit');
-                    }}
-                    onBack={handleBackToHome}
-                  />
-                )
+                <>
+                  <div className={productEditorMode ? 'hidden' : 'contents'}>
+                    <MyProductsScreen
+                      onAddNewProduct={() => {
+                        setEditingManufacturerId(null);
+                        setFocusProductCategoryId(null);
+                        setProductEditorMode('add');
+                      }}
+                      onEditManufacturer={(mfgId) => {
+                        setEditingManufacturerId(mfgId);
+                        setFocusProductCategoryId(null);
+                        setProductEditorMode('edit');
+                      }}
+                      onEditProduct={(categoryId) => {
+                        const products = getSavedUserProducts();
+                        const product = products.find((p) => p.categoryId === categoryId);
+                        if (!product) return;
+                        setEditingManufacturerId(product.manufacturerId);
+                        setFocusProductCategoryId(categoryId);
+                        setProductEditorMode('edit');
+                      }}
+                      onBack={handleBackToHome}
+                    />
+                  </div>
+
+                  {productEditorMode && (
+                    <AddProductScreen
+                      editingManufacturerId={editingManufacturerId}
+                      focusProductCategoryId={focusProductCategoryId}
+                      onSave={handleSaveProducts}
+                      onBack={() => {
+                        setProductEditorMode(null);
+                        setEditingManufacturerId(null);
+                      }}
+                    />
+                  )}
+                </>
               )}
 
               {activeTab === 'settings' && (
