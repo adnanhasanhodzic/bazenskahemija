@@ -24,7 +24,7 @@ export const DEFAULT_SEED_PRODUCTS: UserProduct[] = [
   },
   {
     id: 'prod_belif_algaecide', manufacturerId: DEFAULT_SEED_MANUFACTURER_ID, manufacturerName: DEFAULT_SEED_MANUFACTURER_NAME, categoryId: 'algaecide', categoryTitle: 'Algicid',
-    dosage: { dosageType: 'standard', minAmount: 0.1, maxAmount: 0.5, amount: 0.3, calculatorAmount: 0.3, unit: 'l', targetVolume: 10, volumeUnit: 'm³', frequency: 'custom_days', frequencyDays: 7 },
+    dosage: { dosageType: 'standard', minAmount: 0.1, maxAmount: null, amount: 0.1, calculatorAmount: 0.1, unit: 'l', targetVolume: 10, volumeUnit: 'm³', frequency: 'custom_days', frequencyDays: 7 },
     createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z',
   },
   {
