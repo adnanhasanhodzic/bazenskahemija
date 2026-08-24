@@ -1,13 +1,13 @@
 import { UserProduct } from '../types/product';
 
 const PRODUCTS_KEY = 'bazen_kalkulator_products_list';
-const MIGRATION_KEY = 'bazen_kalkulator_belif_chlorine_20g_v5';
+const MIGRATION_KEY = 'bazen_kalkulator_belif_algaecide_v1';
 const BELIF_MANUFACTURER_ID = 'mfg_belif_doo';
-const CHLORINE_20G_ID = 'prod_belif_chlorine_tablets_20g';
+const ALGAECIDE_ID = 'prod_belif_algaecide';
 
 /**
  * Jednokratna migracija postojeće lokalne baze.
- * Ispravlja ISKLJUČIVO BELIF Hlor tablete 20 g na 1 tabletu / 3 m³.
+ * Ispravlja ISKLJUČIVO BELIF Algicid na 0,1 L / 10 m³.
  * Svi ostali proizvodi i sve korisničke izmjene ostaju netaknuti.
  */
 export function migrateBelifDefaultProducts(): void {
@@ -28,7 +28,7 @@ export function migrateBelifDefaultProducts(): void {
 
     const updatedProducts = products.map((product) => {
       if (
-        product.id !== CHLORINE_20G_ID ||
+        product.id !== ALGAECIDE_ID ||
         product.manufacturerId !== BELIF_MANUFACTURER_ID
       ) {
         return product;
@@ -40,14 +40,15 @@ export function migrateBelifDefaultProducts(): void {
         dosage: {
           ...product.dosage,
           dosageType: 'standard',
-          minAmount: 1,
+          minAmount: 0.1,
           maxAmount: null,
-          amount: 1,
-          calculatorAmount: 1,
-          unit: 'tableta',
-          targetVolume: 3,
+          amount: 0.1,
+          calculatorAmount: 0.1,
+          unit: 'l',
+          targetVolume: 10,
           volumeUnit: 'm³',
-          frequency: 'weekly',
+          frequency: 'custom_days',
+          frequencyDays: 7,
         },
         updatedAt: now,
       };
@@ -59,6 +60,6 @@ export function migrateBelifDefaultProducts(): void {
 
     localStorage.setItem(MIGRATION_KEY, 'true');
   } catch (err) {
-    console.error('Greška pri migraciji BELIF Hlor tablete 20 g:', err);
+    console.error('Greška pri migraciji BELIF Algicida:', err);
   }
 }
