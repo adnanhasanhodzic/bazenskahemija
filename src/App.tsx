@@ -16,11 +16,13 @@ import { Pool } from './types/pool';
 import { getSavedPools, getActivePoolId } from './utils/poolStorage';
 import { getStoredSettings, saveStoredSettings, AppSettings } from './utils/settingsStorage';
 import { ensureProductsDatabaseInitialized, getSavedUserProducts } from './utils/productStorage';
+import { migrateBelifDefaultProducts } from './utils/migrateBelifDefaults';
 import { initializeAndroidFullscreen } from './utils/androidFullscreen';
 
 export default function App() {
   useEffect(() => {
     ensureProductsDatabaseInitialized();
+    migrateBelifDefaultProducts();
     initializeAndroidFullscreen();
   }, []);
 
